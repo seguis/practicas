@@ -5,9 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -20,6 +23,31 @@ type CustomValidator struct {
 
 func (cv *CustomValidator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
+}
+
+// Middleware de seguridad: revisa que traigan un token valido
+func authMiddleware(client *auth.Client) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// Buscamos la cabecera Authorization
+			authHeader := c.Request().Header.Get("Authorization")
+			if authHeader == "" {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Falta el token de autenticación")
+			}
+
+			// Limpiamos el string para quitarle el 'Bearer ' del principio
+			idToken := strings.TrimSpace(strings.Replace(authHeader, "Bearer", "", 1))
+
+			// Verificamos con Google si el token es real y no ha caducado
+			_, err := client.VerifyIDToken(c.Request().Context(), idToken)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Token invalido o vencido: "+err.Error())
+			}
+
+			// Si pasa, seguimos a la siguiente funcion
+			return next(c)
+		}
+	}
 }
 
 func main() {
@@ -40,25 +68,43 @@ func main() {
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	// *** INICIO CONFIGURACION FIRESTORE ***
+	// *** INICIO CONFIGURACION GOOGLE ***
 	ctx := context.Background()
 
-	//Actualizada funcion para buscar las llaves de la BD
+	// Actualizada funcion para buscar las llaves de la BD (sirve para Auth tambien)
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "llavesBd.json")
 
-	// Inicializar bd
+	// 1. Inicializamos la App de Firebase (Necesaria para Auth)
+	app, err := firebase.NewApp(ctx, nil)
+	if err != nil {
+		log.Fatalf("Error arrancando Firebase App: %v\n", err)
+	}
+
+	// 2. Cliente de Autenticacion
+	authClient, err := app.Auth(ctx)
+	if err != nil {
+		log.Fatalf("Error arrancando Auth: %v\n", err)
+	}
+
+	// 3. Inicializar bd (Mantenemos tu logica directa a la BD 'practicas')
 	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas")
 	if err != nil {
 		log.Fatalf("Error inicializando firestore: %v\n", err)
 	}
 	defer client.Close()
-	// *** FIN CONFIGURACIÓN FIRESTORE ***
+	// *** FIN CONFIGURACIÓN ***
 
+	// Rutas publicas (sin proteccion)
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hola Exyt")
 	})
 
-	e.POST("/acreditados", func(c echo.Context) error {
+	// Rutas protegidas (necesitan login)
+	// Creamos un grupo para meterle el candado (middleware)
+	protegidas := e.Group("")
+	protegidas.Use(authMiddleware(authClient))
+
+	protegidas.POST("/acreditados", func(c echo.Context) error {
 		acreditado := new(Acreditado)
 
 		if err := c.Bind(acreditado); err != nil {
