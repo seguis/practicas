@@ -25,11 +25,11 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
-// Middleware de seguridad: revisa que traigan un token valido
+// Middleware de seguridad: se revisa que traigan un token valido
 func authMiddleware(client *auth.Client) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			// Buscamos la cabecera Authorization
+			// Se busca la cabecera Authorization
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Falta el token de autenticación")
@@ -86,7 +86,7 @@ func main() {
 		log.Fatalf("Error arrancando Auth: %v\n", err)
 	}
 
-	// 3. Inicializar bd (Mantenemos tu logica directa a la BD 'practicas')
+	// 3. Inicializar bd
 	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas")
 	if err != nil {
 		log.Fatalf("Error inicializando firestore: %v\n", err)
@@ -100,7 +100,7 @@ func main() {
 	})
 
 	// Rutas protegidas (necesitan login)
-	// Creamos un grupo para meterle el candado (middleware)
+	// Se crea un grupo para meterle el candado (middleware)
 	protegidas := e.Group("")
 	protegidas.Use(authMiddleware(authClient))
 
