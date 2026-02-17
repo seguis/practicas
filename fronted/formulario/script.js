@@ -17,11 +17,21 @@ document.addEventListener("DOMContentLoaded", () => {
         inputField.style.borderColor = "#ccc"; // Vuelve al color original
     };
 
+    // Funcion apagar camara en cualquier navegador
+    const stopCamera = () => {
+        if (stream) {
+            video.pause();
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            stream = null; //Limpiar la memoria
+        }
+    };
+
     // Validar DNI / NIE en España
     const validarDNINIE = (valor) => {
         const validChars = 'TRWAGMYFPDXBNJZSQVHLCKE';
         const str = valor.trim().toUpperCase();
-        
+
         // Expresiones regulares
         const nifRegex = /^[0-9]{8}[A-Z]$/i;
         const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
@@ -38,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const letraUsuario = str.slice(-1); // Ultimo caracter
         const numero = parseInt(numeroTratado.slice(0, 8), 10);
-        
+
         // Formula: el resto de dividir entre 23 nos da la posicion de la letra correcta
         const letraCalculada = validChars.charAt(numero % 23);
 
@@ -51,6 +61,67 @@ document.addEventListener("DOMContentLoaded", () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     };
+
+    // --- USAR LA CAMARA E IMAGEN ---
+    const btnCamera = document.getElementById("btn-camera");
+    const cameraContainer = document.getElementById("camera-container");
+    const video = document.getElementById("webcam-video");
+    const btnCapture = document.getElementById("btn-capture");
+    const canvas = document.getElementById("photo-canvas");
+    const ctx = canvas.getContext("2d");
+    const fotoFile = document.getElementById("foto-file");
+
+    let stream = null; // Para guardar la conexion de la cámara
+
+    // 1. Encender la webcam
+    btnCamera.addEventListener("click", async () => {
+        try {
+            // Pedimos permiso para usar la cámara
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            video.srcObject = stream;
+            cameraContainer.style.display = "block"; // Mostrar el video
+            canvas.style.display = "none"; // Ocultar foto anterior si la habia
+            fotoFile.value = ""; // Limpiar input de archivo por si habia algo
+        } catch (err) {
+            alert("Error al acceder a la camara. Asegurate de dar permisos.");
+            console.error(err);
+        }
+    });
+
+    // Capturar la foto de la webcam
+    btnCapture.addEventListener("click", () => {
+        if (!stream) return;
+
+        // Pintar fotograma en el lienzo de 121x98
+        ctx.drawImage(video, 0, 0, 121, 98);
+
+        // Apagar camara
+        stopCamera();
+
+        cameraContainer.style.display = "none";
+        canvas.style.display = "block"; // Mostrar resultado
+    });
+
+    // Subir archivo desde el ordenador
+    fotoFile.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Si es desde el ordenador apagar camara
+        stopCamera();
+        cameraContainer.style.display = "none";
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, 121, 98);
+                canvas.style.display = "block";
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
 
     // Evento del formulario
     form.addEventListener("submit", (e) => {
@@ -122,9 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Validar foto
-        const fotoInput = document.getElementById("foto-file");
-        if (!fotoInput.files || fotoInput.files.length === 0) {
-            showError("foto", "Debes subir o tomar una foto.");
+        if (canvas.style.display !== "block") {
+            showError("foto", "Debes subir un archivo o tomar una foto con la cámara.");
             formularioValido = false;
         } else {
             clearError("foto");

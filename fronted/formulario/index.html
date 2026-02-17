@@ -52,13 +52,23 @@
             </div>
 
             <div class="form-group photo-section">
-                <label>Foto de Acreditacion (121x98 px) *</label>
+                <label>Foto de Acreditación (121x98 px) *</label>
+                
                 <div class="photo-controls">
-                    <button type="button" id="btn-camera" class="btn-secondary">Usar Webcam</button>
+                    <button type="button" id="btn-camera" class="btn-secondary">📸 Usar Webcam</button>
                     <span>o</span>
                     <input type="file" id="foto-file" accept="image/*">
                 </div>
-                <canvas id="photo-canvas" width="121" height="98"></canvas>
+
+                <div id="camera-container" style="display: none; margin-top: 10px; text-align: center;">
+                    <video id="webcam-video" autoplay playsinline style="max-width: 100%; max-height: 250px; border: 2px solid var(--color-secondary); border-radius: 8px;"></video>
+                    <button type="button" id="btn-capture" class="btn-secondary" style="margin-top: 10px;">Tomar foto</button>
+                </div>
+
+                <div style="text-align: center; margin-top: 15px;">
+                    <canvas id="photo-canvas" width="121" height="98"></canvas>
+                </div>
+                
                 <span class="error-msg" id="error-foto"></span>
             </div>
 
