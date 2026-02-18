@@ -68,6 +68,7 @@ label {
 
 input[type="text"],
 input[type="email"],
+input[type="password"],
 input[type="file"] {
     padding: 12px;
     border: 1px solid #ccc;
