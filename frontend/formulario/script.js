@@ -1,7 +1,19 @@
+// Importar autenticacion
+import { auth } from "../src/firebase/init.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+// Revisar si existe alguien conectado
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        // Sino forzar al login
+        window.location.href = "../login/index.html";
+    }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("acreditacionForm");
 
-    // Funcion auxiliar para mostrar errores
+    // Funcion para mostrar errores
     const showError = (inputId, mensaje) => {
         const errorSpan = document.getElementById(`error-${inputId}`);
         const inputField = document.getElementById(inputId);
@@ -49,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const letraUsuario = str.slice(-1); // Ultimo caracter
         const numero = parseInt(numeroTratado.slice(0, 8), 10);
 
-        // Formula: el resto de dividir entre 23 nos da la posicion de la letra correcta
+        // Formula: el resto de dividir entre 23 da la posicion de la letra correcta
         const letraCalculada = validChars.charAt(numero % 23);
 
         return letraUsuario === letraCalculada;
@@ -73,10 +85,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let stream = null; // Para guardar la conexion de la cámara
 
-    // 1. Encender la webcam
+    // Encender la webcam
     btnCamera.addEventListener("click", async () => {
         try {
-            // Pedimos permiso para usar la cámara
+            // Permiso para usar la cámara
             stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
             video.srcObject = stream;
             cameraContainer.style.display = "block"; // Mostrar el video
