@@ -1,0 +1,157 @@
+/* Variables Globales de la Paleta */
+:root {
+    --color-primary: #e1b62f; /* Mostaza */
+    --color-secondary: #9dacb4; /* Gris azulado */
+    --color-bg: #e4e2dd; /* Hueso / Neutro */
+    --color-text: #333333;
+    --color-error: #d9534f;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--color-bg);
+    /* Fondo sugerido: un patrón sutil de cine o textura de papel podría ir aquí */
+    background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+    font-family: var(--font-family);
+    color: var(--color-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.form-container {
+    background: #ffffff;
+    width: 100%;
+    max-width: 600px; /* Tamaño ideal para desktop (70-80% zoom) */
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-top: 8px solid var(--color-primary);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    max-width: 150px;
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.form-header h1 {
+    color: var(--color-secondary);
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--color-secondary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"] {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(225, 182, 47, 0.2);
+}
+
+/* Mensajes de error ocultos por defecto */
+.error-msg {
+    color: var(--color-error);
+    font-size: 0.85rem;
+    margin-top: 5px;
+    min-height: 16px;
+    display: block;
+}
+
+.photo-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px dashed var(--color-secondary);
+}
+
+.photo-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+#photo-canvas {
+    border: 2px solid var(--color-primary);
+    background-color: #eee;
+    display: none; /* Se mostrara cuando haya foto */
+    margin: 0 auto;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--color-primary);
+    color: #fff;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-primary:hover {
+    background-color: #c9a228;
+}
+
+.btn-secondary {
+    padding: 10px 15px;
+    background-color: var(--color-secondary);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #839199;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .form-container {
+        padding: 20px;
+    }
+    .photo-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

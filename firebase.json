@@ -1,0 +1,19 @@
+{
+  "hosting": {
+    "public": "frontend",
+    "cleanUrls": true,
+    "trailingSlash": true,
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "/login/",
+        "type": 301
+      }
+    ]
+  }
+}

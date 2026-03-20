@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acreditacion - Formulario</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header" style="position: relative;">
+            <button id="btn-logout" class="btn-secondary" style="position: absolute; top: 0; right: 0; padding: 5px 10px; font-size: 0.8rem;">Cerrar Sesión</button>
+            
+            <img src="../assets/logo-fct.png" alt="Logo FCT Festival" class="logo">
+            <h1>Registro de Acreditaciones</h1>
+            <p>Por favor, completa tus datos para el evento.</p>
+        </div>
+
+        <form id="acreditacionForm" novalidate>
+            <div class="form-group">
+                <label for="nombre">Nombre *</label>
+                <input type="text" id="nombre" name="nombre" required>
+                <span class="error-msg" id="error-nombre"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="apellidos">Apellidos *</label>
+                <input type="text" id="apellidos" name="apellidos" required>
+                <span class="error-msg" id="error-apellidos"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="dni">DNI / NIE *</label>
+                <input type="text" id="dni" name="dni" placeholder="Ej: 12345678Z" required>
+                <span class="error-msg" id="error-dni"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo electronico *</label>
+                <input type="email" id="email" name="email" required>
+                <span class="error-msg" id="error-email"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="email-confirm">Confirmacion de correo *</label>
+                <input type="email" id="email-confirm" name="email-confirm" required>
+                <span class="error-msg" id="error-email-confirm"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="empresa">Empresa *</label>
+                <input type="text" id="empresa" name="empresa" required>
+                <span class="error-msg" id="error-empresa"></span>
+            </div>
+
+            <div class="form-group photo-section">
+                <label>Foto (121x98 px) *</label>
+                
+                <div class="photo-controls">
+                    <button type="button" id="btn-camera" class="btn-secondary"> Usar Webcam</button>
+                    <span>o</span>
+                    <input type="file" id="foto-file" accept="image/*">
+                </div>
+
+                <div id="camera-container" style="display: none; margin-top: 10px; text-align: center;">
+                    <video id="webcam-video" autoplay playsinline style="max-width: 100%; max-height: 250px; border: 2px solid var(--color-secondary); border-radius: 8px;"></video>
+                    <button type="button" id="btn-capture" class="btn-secondary" style="margin-top: 10px;">Tomar foto</button>
+                </div>
+
+                <div style="text-align: center; margin-top: 15px;">
+                    <canvas id="photo-canvas" width="121" height="98"></canvas>
+                </div>
+                
+                <span class="error-msg" id="error-foto"></span>
+            </div>
+
+            <button type="submit" class="btn-primary">Enviar Solicitud</button>
+        </form>
+    </div>
+    
+    <script type="module" src="script.js"></script>
+</body>
+</html>
