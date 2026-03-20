@@ -35,7 +35,7 @@ func authMiddleware(client *auth.Client) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Falta el token de autenticación")
 			}
 
-			// Limpiamos el string para quitarle el 'Bearer ' del principio
+			// Se limpia el string para quitarle el 'Bearer ' del principio
 			idToken := strings.TrimSpace(strings.Replace(authHeader, "Bearer", "", 1))
 
 			// Verificamos con Google si el token es real y no ha caducado
@@ -52,6 +52,12 @@ func authMiddleware(client *auth.Client) echo.MiddlewareFunc {
 
 func main() {
 	e := echo.New()
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowMethods: []string{http.MethodPost, http.MethodGet},
+	}))
 
 	// Middleware
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -72,21 +78,23 @@ func main() {
 	ctx := context.Background()
 
 	// Actualizada funcion para buscar las llaves de la BD (sirve para Auth tambien)
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "llavesBd.json")
+	if _, err := os.Stat("llavesBd.json"); err == nil {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "llavesBd.json")
+	}
 
-	// 1. Inicializamos la App de Firebase (Necesaria para Auth)
+	// Inicializar la App de Firebase (Necesaria para Auth)
 	app, err := firebase.NewApp(ctx, nil)
 	if err != nil {
 		log.Fatalf("Error arrancando Firebase App: %v\n", err)
 	}
 
-	// 2. Cliente de Autenticacion
+	// Cliente de Autenticacion
 	authClient, err := app.Auth(ctx)
 	if err != nil {
 		log.Fatalf("Error arrancando Auth: %v\n", err)
 	}
 
-	// 3. Inicializar bd
+	// Inicializar bd
 	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas")
 	if err != nil {
 		log.Fatalf("Error inicializando firestore: %v\n", err)
@@ -129,5 +137,9 @@ func main() {
 		return c.JSON(http.StatusCreated, acreditado)
 	})
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	e.Logger.Fatal(e.Start(":8080"))
 }
