@@ -53,6 +53,12 @@ func authMiddleware(client *auth.Client) echo.MiddlewareFunc {
 func main() {
 	e := echo.New()
 
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:8000", "http://127.0.0.1:8000"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowMethods: []string{http.MethodPost, http.MethodGet},
+	}))
+
 	// Middleware
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus: true,

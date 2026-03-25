@@ -8,10 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const showError = (id, msg) => document.getElementById(`error-${id}`).textContent = msg;
     const clearErrors = () => document.querySelectorAll(".error-msg").forEach(el => el.textContent = "");
 
-    // 1. Validar Email Formato
+    // Validar Email Formato
     const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    // 2. Login Tradicional (Email + Pass)
+    // Login Tradicional (Email + Pass)
     loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         clearErrors();
@@ -30,14 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // Llamada a Firebase
             await signInWithEmailAndPassword(auth, email, password);
-            window.location.href = "../formulario/index.html"; // Redirigir al éxito
+            window.location.href = "../formulario/index.html"; // Redirigir al exito
         } catch (error) {
             showError("global", "Credenciales incorrectas o usuario inexistente.");
             console.error(error.message);
         }
     });
 
-    // 3. Login con Google
+    // Login con Google
     btnGoogle.addEventListener("click", async () => {
         try {
             await signInWithPopup(auth, provider);
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 4. Recuperar Contraseña
+    // Recuperar Contraseña
     btnForgot.addEventListener("click", async (e) => {
         e.preventDefault();
         clearErrors();

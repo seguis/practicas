@@ -1,6 +1,7 @@
 // Importar autenticacion
 import { auth } from "../src/firebase/init.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 // Revisar si existe alguien conectado
 onAuthStateChanged(auth, (user) => {
@@ -17,16 +18,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const showError = (inputId, mensaje) => {
         const errorSpan = document.getElementById(`error-${inputId}`);
         const inputField = document.getElementById(inputId);
-        errorSpan.textContent = mensaje;
-        inputField.style.borderColor = "var(--color-error)";
+        
+        if (errorSpan) errorSpan.textContent = mensaje;
+        
+        // Solo se pinta el borde si el input existe realmente
+        if (inputField) {
+            inputField.style.borderColor = "var(--color-error)";
+        }
     };
 
     // Funcion para limpiar errores
     const clearError = (inputId) => {
         const errorSpan = document.getElementById(`error-${inputId}`);
         const inputField = document.getElementById(inputId);
-        errorSpan.textContent = "";
-        inputField.style.borderColor = "#ccc"; // Vuelve al color original
+        
+        if (errorSpan) errorSpan.textContent = "";
+        
+        // Solo se restaura el borde si existe
+        if (inputField) {
+            inputField.style.borderColor = "#ccc"; // Vuelve al color original
+        }
     };
 
     // Funcion apagar camara en cualquier navegador
@@ -136,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Evento del formulario
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         let formularioValido = true;
@@ -214,8 +225,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Si pasa todos los test
         if (formularioValido) {
-            console.log("Enviando al backend...");
-            alert("Formulario validado correctamente");
+           const btnSubmit = form.querySelector("button[type='submit']");
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = "Guardando...";
+
+            try {
+                // 1. Obtener el Token de seguridad (El pase VIP para tu main.go)
+                const idToken = await auth.currentUser.getIdToken();
+
+                // 2. Subir la foto a Firebase Storage
+                const storage = getStorage();
+                const fileName = `fotos/${Date.now()}-${auth.currentUser.uid}.png`;
+                const storageRef = ref(storage, fileName);
+                
+                // Extraer la imagen del canvas
+                const imageData = canvas.toDataURL("image/png");
+                
+                // Subir y obtener la URL pública
+                const snapshot = await uploadString(storageRef, imageData, 'data_url');
+                const photoUrl = await getDownloadURL(snapshot.ref);
+
+                // 3. Empaquetar los datos EXACTAMENTE como los pide persona.go
+                const datosAcreditado = {
+                    nombre: document.getElementById("nombre").value.trim(),
+                    apellidos: document.getElementById("apellidos").value.trim(),
+                    email: document.getElementById("email").value.trim(),
+                    dni: document.getElementById("dni").value.trim(),
+                    empresa: document.getElementById("empresa").value.trim(),
+                    foto: photoUrl
+                };
+
+                // 4. Enviar los datos a tu servidor de Go
+                const response = await fetch("http://localhost:8080/acreditados", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${idToken}` // La llave del middleware
+                    },
+                    body: JSON.stringify(datosAcreditado)
+                });
+
+                if (response.ok) {
+                    const resultado = await response.json();
+                    alert(`¡Éxito! Acreditación guardada con ID: ${resultado.id}`);
+                    form.reset();
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el lienzo
+                    canvas.style.display = "none";
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert("Hubo un problema al enviar los datos: " + error.message);
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = "Enviar Solicitud";
+            }
         }
     });
 });
