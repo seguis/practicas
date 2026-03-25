@@ -53,14 +53,17 @@
                 <span class="error-msg" id="error-empresa"></span>
             </div>
             <div class="form-group">
-                <label for="fecha">Día de asistencia *</label>
-                <select id="fecha" name="fecha" required>
-                    <option value="" disabled selected>Selecciona un día</option>
-                    <option value="2026-06-15">Día 1 - 15 de Junio</option>
-                    <option value="2026-06-16">Día 2 - 16 de Junio</option>
-                    <option value="2026-06-17">Día 3 - 17 de Junio</option>
-                    <option value="2026-06-18">Día 4 - 18 de Junio</option>
-                </select>
+                <label for="fecha">Selecciona el día de asistencia *</label>
+                <input 
+                    type="date" 
+                    id="fecha" 
+                    name="fecha" 
+                    min="2026-06-15" 
+                    max="2026-06-18" 
+                    required
+                    class="calendar-input"
+                >
+                <small>El evento se realiza del 15 al 18 de Junio.</small>
                 <span class="error-msg" id="error-fecha"></span>
             </div>
 

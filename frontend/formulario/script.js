@@ -219,9 +219,16 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             clearError("empresa");
         }
-        const fecha = document.getElementById("fecha").value;
-        if (!fecha) {
-            showError("fecha", "Debes seleccionar un día para asistir.");
+        //Fecha de evento
+        const fechaInput = document.getElementById("fecha");
+        const fechaSeleccionada = fechaInput.value;
+        const fechasPermitidas = ["2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18"];
+        
+        if (!fechaSeleccionada) {
+            showError("fecha", "Por favor, elige una fecha.");
+            formularioValido = false;
+        } else if (!fechasPermitidas.includes(fechaSeleccionada)) {
+            showError("fecha", "Selecciona un día entre el 15 y el 18 de junio.");
             formularioValido = false;
         } else {
             clearError("fecha");
@@ -269,11 +276,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
 
                 // Enviar al backend
-                const response = await fetch("https://exyt-backend-786021165691.europe-west1.run.app/acreditados", {
+                const response = await fetch("http://localhost:8080/acreditados", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${idToken}` // La llave del middleware
+                        "Authorization": `Bearer ${idToken}` 
                     },
                     body: JSON.stringify(datosAcreditado)
                 });

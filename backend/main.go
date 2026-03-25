@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"google.golang.org/api/option"
 )
 
 // CustomValidator integra el validador con Echo
@@ -56,7 +57,7 @@ func main() {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-		AllowMethods: []string{http.MethodPost, http.MethodGet},
+		AllowMethods: []string{http.MethodPost, http.MethodGet, http.MethodOptions},
 	}))
 
 	// Middleware
@@ -76,6 +77,7 @@ func main() {
 
 	// *** INICIO CONFIGURACION GOOGLE ***
 	ctx := context.Background()
+	opt := option.WithCredentialsFile("llavesBd.json")
 
 	// Actualizada funcion para buscar las llaves de la BD (sirve para Auth tambien)
 	if _, err := os.Stat("llavesBd.json"); err == nil {
@@ -83,7 +85,7 @@ func main() {
 	}
 
 	// Inicializar la App de Firebase (Necesaria para Auth)
-	app, err := firebase.NewApp(ctx, nil)
+	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
 		log.Fatalf("Error arrancando Firebase App: %v\n", err)
 	}
@@ -95,7 +97,7 @@ func main() {
 	}
 
 	// Inicializar bd
-	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas")
+	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas", opt)
 	if err != nil {
 		log.Fatalf("Error inicializando firestore: %v\n", err)
 	}
