@@ -219,6 +219,13 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             clearError("empresa");
         }
+        const fecha = document.getElementById("fecha").value;
+        if (!fecha) {
+            showError("fecha", "Debes seleccionar un día para asistir.");
+            formularioValido = false;
+        } else {
+            clearError("fecha");
+        }
 
         // Validar foto
         if (canvas.style.display !== "block") {
@@ -257,7 +264,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     email: document.getElementById("email").value.trim(),
                     dni: document.getElementById("dni").value.trim(),
                     empresa: document.getElementById("empresa").value.trim(),
-                    foto: photoUrl
+                    foto: photoUrl,
+                    fecha: document.getElementById("fecha").value
                 };
 
                 // Enviar al backend
@@ -280,7 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     const errorText = await response.text();
                     throw new Error(errorText);
                 }
-
             } catch (error) {
                 console.error("Error al guardar:", error);
                 alert("Hubo un problema al enviar los datos: " + error.message);
