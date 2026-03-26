@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // Llamada a Firebase
             await signInWithEmailAndPassword(auth, email, password);
-            window.location.href = "../formulario/index.html"; // Redirigir al éxito
+            window.location.href = "../formulario/index.html"; // Redirigir al exito
         } catch (error) {
             showError("global", "Credenciales incorrectas o usuario inexistente.");
             console.error(error.message);

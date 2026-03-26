@@ -33,8 +33,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const showError = (inputId, mensaje) => {
         const errorSpan = document.getElementById(`error-${inputId}`);
         const inputField = document.getElementById(inputId);
-        errorSpan.textContent = mensaje;
-        inputField.style.borderColor = "var(--color-error)";
+        
+        if (errorSpan) errorSpan.textContent = mensaje;
+        
+        // Solo se pinta el borde si el input existe realmente
+        if (inputField) {
+            inputField.style.borderColor = "var(--color-error)";
+        }
     };
 
     // Funcion para limpiar errores
@@ -132,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Subir archivo desde el ordenador
     fotoFile.addEventListener("change", (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files;
         if (!file) return;
 
         // Si es desde el ordenador apagar camara
