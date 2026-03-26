@@ -120,9 +120,17 @@ func main() {
 		if err := c.Bind(acreditado); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-
 		if err := c.Validate(acreditado); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		docs, err := client.Collection("acreditado").Where("fecha", "==", acreditado.Fecha).Documents(ctx).GetAll()
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error al verificar el aforo: "+err.Error())
+		}
+
+		if len(docs) >= 1 {
+			return echo.NewHTTPError(http.StatusConflict, "El aforo para el día "+acreditado.Fecha+" está completo (máximo 20 personas).")
 		}
 
 		now := time.Now().Unix()
@@ -135,7 +143,6 @@ func main() {
 		}
 
 		acreditado.ID = ref.ID
-
 		return c.JSON(http.StatusCreated, acreditado)
 	})
 

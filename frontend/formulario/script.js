@@ -284,6 +284,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     body: JSON.stringify(datosAcreditado)
                 });
+                if (response.status === 409) {
+                    const errorData = await response.json();
+                    showError("fecha", errorData.message); 
+                    alert(errorData.message);
+                    return; 
+                }
 
                 if (response.ok) {
                     const resultado = await response.json();
