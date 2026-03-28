@@ -1,0 +1,32 @@
+name: Desplegar Backend en Cloud Run
+
+on:
+  push:
+    branches:
+      - develop  # Solo en rama develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Iniciar sesion en GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_LLAVE_MAESTRA }}'
+
+      - name: Preparar la terminal de GCP
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Desplegar en GCP
+        # Cambia 'tu-proyecto-id' por el ID real de tu proyecto en Firebase/Google Cloud
+        # Cambia la región si tu Cloud Run está en otra distinta a europe-west1 (Madrid/Bélgica)
+        run: |
+          gcloud run deploy backend-exyt \
+            --source ./backend \
+            --project tu-proyecto-id \
+            --region europe-west1 \
+            --allow-unauthenticated
