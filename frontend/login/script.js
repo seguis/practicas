@@ -8,10 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const showError = (id, msg) => document.getElementById(`error-${id}`).textContent = msg;
     const clearErrors = () => document.querySelectorAll(".error-msg").forEach(el => el.textContent = "");
 
-    // Validar Email Formato
+    //Validar Email Formato
     const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    // Login Tradicional (Email + Pass)
+    //Login Tradicional (Email + Pass)
     loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         clearErrors();
@@ -51,18 +51,32 @@ document.addEventListener("DOMContentLoaded", () => {
     btnForgot.addEventListener("click", async (e) => {
         e.preventDefault();
         clearErrors();
-        const email = document.getElementById("email").value.trim();
 
+        // Buscamos el email en el input, pero si está vacío, se usa un Pop-up
+        let email = document.getElementById("email").value.trim();
+        
         if (!email || !isValidEmail(email)) {
-            showError("email", "Introduce un correo válido arriba para recuperarla.");
-            return;
+            email = prompt("Por favor, introduce tu correo electronico para enviarte el enlace de recuperacion:");
+            // Si el usuario cancela el pop-up o lo deja vacío, se detiene la función
+            if (!email || !isValidEmail(email)) {
+                return; 
+            }
         }
 
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("Te hemos enviado un enlace de recuperación a tu correo.");
+            alert("Listo revisa tu bandeja de entrada (y la carpeta de Spam) se te envio un enlace.");
         } catch (error) {
-            showError("global", "Error al enviar el correo de recuperación.");
+            console.error("Error de Firebase al recuperar:", error.code, error.message);
+            
+            // Filtramos los errores más comunes para darle feedback real al usuario
+            if (error.code === 'auth/user-not-found') {
+                showError("global", "No existe ninguna cuenta registrada con ese correo.");
+            } else if (error.code === 'auth/invalid-email') {
+                showError("global", "El formato del correo es invalido.");
+            } else {
+                showError("global", "Hubo un problema, intenta de nuevo mas tarde.");
+            }
         }
     });
 });

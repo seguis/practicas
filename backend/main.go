@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"google.golang.org/api/option"
 )
 
 // CustomValidator integra el validador con Echo
@@ -35,7 +36,7 @@ func authMiddleware(client *auth.Client) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Falta el token de autenticación")
 			}
 
-			// Limpiamos el string para quitarle el 'Bearer ' del principio
+			// Se limpia el string para quitarle el 'Bearer ' del principio
 			idToken := strings.TrimSpace(strings.Replace(authHeader, "Bearer", "", 1))
 
 			// Verificamos con Google si el token es real y no ha caducado
@@ -54,9 +55,9 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:8000", "http://127.0.0.1:8000"},
+		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-		AllowMethods: []string{http.MethodPost, http.MethodGet},
+		AllowMethods: []string{http.MethodPost, http.MethodGet, http.MethodOptions},
 	}))
 
 	// Middleware
@@ -76,24 +77,27 @@ func main() {
 
 	// *** INICIO CONFIGURACION GOOGLE ***
 	ctx := context.Background()
+	opt := option.WithCredentialsFile("llavesBd.json")
 
 	// Actualizada funcion para buscar las llaves de la BD (sirve para Auth tambien)
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "llavesBd.json")
+	if _, err := os.Stat("llavesBd.json"); err == nil {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "llavesBd.json")
+	}
 
-	// 1. Inicializamos la App de Firebase (Necesaria para Auth)
-	app, err := firebase.NewApp(ctx, nil)
+	// Inicializar la App de Firebase (Necesaria para Auth)
+	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
 		log.Fatalf("Error arrancando Firebase App: %v\n", err)
 	}
 
-	// 2. Cliente de Autenticacion
+	// Cliente de Autenticacion
 	authClient, err := app.Auth(ctx)
 	if err != nil {
 		log.Fatalf("Error arrancando Auth: %v\n", err)
 	}
 
-	// 3. Inicializar bd
-	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas")
+	// Inicializar bd
+	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas", opt)
 	if err != nil {
 		log.Fatalf("Error inicializando firestore: %v\n", err)
 	}
@@ -116,9 +120,17 @@ func main() {
 		if err := c.Bind(acreditado); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-
 		if err := c.Validate(acreditado); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		docs, err := client.Collection("acreditado").Where("fecha", "==", acreditado.Fecha).Documents(ctx).GetAll()
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error al verificar el aforo: "+err.Error())
+		}
+
+		if len(docs) >= 1 {
+			return echo.NewHTTPError(http.StatusConflict, "El aforo para el día "+acreditado.Fecha+" está completo (máximo 20 personas).")
 		}
 
 		now := time.Now().Unix()
@@ -131,9 +143,12 @@ func main() {
 		}
 
 		acreditado.ID = ref.ID
-
 		return c.JSON(http.StatusCreated, acreditado)
 	})
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	e.Logger.Fatal(e.Start(":8080"))
 }

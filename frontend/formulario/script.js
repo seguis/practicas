@@ -1,6 +1,6 @@
 // Importar autenticacion
 import { auth } from "../src/firebase/init.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 // Revisar si existe alguien conectado
@@ -13,6 +13,21 @@ onAuthStateChanged(auth, (user) => {
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("acreditacionForm");
+
+    // Funcion para cerrar sesion
+    const btnLogout = document.getElementById("btn-logout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+                // El onAuthStateChanged que ya tienes programado detectará que no hay usuario 
+                // y lo enviará automáticamente de vuelta al login. ¡Magia!
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+                alert("Hubo un problema al cerrar la sesión.");
+            }
+        });
+    }
 
     // Funcion para mostrar errores
     const showError = (inputId, mensaje) => {
@@ -31,13 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearError = (inputId) => {
         const errorSpan = document.getElementById(`error-${inputId}`);
         const inputField = document.getElementById(inputId);
-        
-        if (errorSpan) errorSpan.textContent = "";
-        
-        // Solo se restaura el borde si existe
-        if (inputField) {
-            inputField.style.borderColor = "#ccc"; // Vuelve al color original
-        }
+        errorSpan.textContent = "";
+        //inputField.style.borderColor = "#ccc"; // Vuelve al color original
     };
 
     // Funcion apagar camara en cualquier navegador
@@ -127,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Subir archivo desde el ordenador
     fotoFile.addEventListener("change", (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files;
         if (!file) return;
 
         // Si es desde el ordenador apagar camara
@@ -214,6 +224,20 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             clearError("empresa");
         }
+        //Fecha de evento
+        const fechaInput = document.getElementById("fecha");
+        const fechaSeleccionada = fechaInput.value;
+        const fechasPermitidas = ["2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18"];
+        
+        if (!fechaSeleccionada) {
+            showError("fecha", "Por favor, elige una fecha.");
+            formularioValido = false;
+        } else if (!fechasPermitidas.includes(fechaSeleccionada)) {
+            showError("fecha", "Selecciona un día entre el 15 y el 18 de junio.");
+            formularioValido = false;
+        } else {
+            clearError("fecha");
+        }
 
         // Validar foto
         if (canvas.style.display !== "block") {
@@ -223,17 +247,17 @@ document.addEventListener("DOMContentLoaded", () => {
             clearError("foto");
         }
 
-        // Si pasa todos los test
+        // Si formulario es valido
         if (formularioValido) {
-           const btnSubmit = form.querySelector("button[type='submit']");
+            const btnSubmit = form.querySelector("button[type='submit']");
             btnSubmit.disabled = true;
             btnSubmit.textContent = "Guardando...";
 
             try {
-                // 1. Obtener el Token de seguridad (El pase VIP para tu main.go)
+                // Obtener Token
                 const idToken = await auth.currentUser.getIdToken();
 
-                // 2. Subir la foto a Firebase Storage
+                // Subir la foto a Firebase Storage
                 const storage = getStorage();
                 const fileName = `fotos/${Date.now()}-${auth.currentUser.uid}.png`;
                 const storageRef = ref(storage, fileName);
@@ -245,29 +269,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 const snapshot = await uploadString(storageRef, imageData, 'data_url');
                 const photoUrl = await getDownloadURL(snapshot.ref);
 
-                // 3. Empaquetar los datos EXACTAMENTE como los pide persona.go
+                // Empaquetar los datos
                 const datosAcreditado = {
                     nombre: document.getElementById("nombre").value.trim(),
                     apellidos: document.getElementById("apellidos").value.trim(),
                     email: document.getElementById("email").value.trim(),
                     dni: document.getElementById("dni").value.trim(),
                     empresa: document.getElementById("empresa").value.trim(),
-                    foto: photoUrl
+                    foto: photoUrl,
+                    fecha: document.getElementById("fecha").value
                 };
 
-                // 4. Enviar los datos a tu servidor de Go
+                // Enviar al backend
                 const response = await fetch("http://localhost:8080/acreditados", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${idToken}` // La llave del middleware
+                        "Authorization": `Bearer ${idToken}` 
                     },
                     body: JSON.stringify(datosAcreditado)
                 });
+                if (response.status === 409) {
+                    const errorData = await response.json();
+                    showError("fecha", errorData.message); 
+                    alert(errorData.message);
+                    return; 
+                }
 
                 if (response.ok) {
                     const resultado = await response.json();
-                    alert(`¡Éxito! Acreditación guardada con ID: ${resultado.id}`);
+                    alert(`Perfecto, datos guardados con id: ${resultado.id}`);
                     form.reset();
                     ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el lienzo
                     canvas.style.display = "none";
@@ -275,7 +306,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     const errorText = await response.text();
                     throw new Error(errorText);
                 }
-
             } catch (error) {
                 console.error("Error al guardar:", error);
                 alert("Hubo un problema al enviar los datos: " + error.message);
