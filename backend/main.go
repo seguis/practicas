@@ -77,15 +77,19 @@ func main() {
 
 	// *** INICIO CONFIGURACION GOOGLE ***
 	ctx := context.Background()
-	opt := option.WithCredentialsFile("llavesBd.json")
 
-	// Actualizada funcion para buscar las llaves de la BD (sirve para Auth tambien)
+	// Creamos una lista de opciones vacia
+	var opts []option.ClientOption
+
+	// Comprobar si el archivo llavesBd existe en Local
 	if _, err := os.Stat("llavesBd.json"); err == nil {
+		// Si existe lo usa
+		opts = append(opts, option.WithCredentialsFile("llavesBd.json"))
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "llavesBd.json")
 	}
 
-	// Inicializar la App de Firebase (Necesaria para Auth)
-	app, err := firebase.NewApp(ctx, nil, opt)
+	// Inicializar la App de Firebase, si esta el archivo llavesBd lo usa, sino usa la nube
+	app, err := firebase.NewApp(ctx, nil, opts...)
 	if err != nil {
 		log.Fatalf("Error arrancando Firebase App: %v\n", err)
 	}
@@ -97,19 +101,19 @@ func main() {
 	}
 
 	// Inicializar bd
-	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas", opt)
+	client, err := firestore.NewClientWithDatabase(ctx, "pf26-seguis-rafael-lopez", "practicas", opts...)
 	if err != nil {
 		log.Fatalf("Error inicializando firestore: %v\n", err)
 	}
 	defer client.Close()
 	// *** FIN CONFIGURACIÓN ***
 
-	// Rutas publicas (sin proteccion)
+	// Rutas publicas sin proteccion
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hola Exyt")
 	})
 
-	// Rutas protegidas (necesitan login)
+	// Rutas protegidas que necesitan login
 	// Se crea un grupo para meterle el candado (middleware)
 	protegidas := e.Group("")
 	protegidas.Use(authMiddleware(authClient))
