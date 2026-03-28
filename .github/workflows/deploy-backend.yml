@@ -22,11 +22,9 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Desplegar en GCP
-        # Cambia 'tu-proyecto-id' por el ID real de tu proyecto en Firebase/Google Cloud
-        # Cambia la región si tu Cloud Run está en otra distinta a europe-west1 (Madrid/Bélgica)
         run: |
           gcloud run deploy backend-exyt \
             --source ./backend \
-            --project tu-proyecto-id \
+            --project pf26-seguis-rafael-lopez \
             --region europe-west1 \
             --allow-unauthenticated
