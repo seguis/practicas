@@ -281,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
 
                 // Enviar al backend
-                const response = await fetch("http://localhost:8080/acreditados", {
+                const response = await fetch("https://backend-exyt-786021165691.europe-west1.run.app/acreditados", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
